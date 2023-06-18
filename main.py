@@ -188,5 +188,6 @@ async def dc(ctx):
     await vc.disconnect()
 
 #start the bot with our token
-TOKEN = str(os.getenv('TOKEN'))
-bot.run(TOKEN)
+# TOKEN = str(os.getenv('TOKEN'))
+# bot.run(TOKEN)
+bot.run("MTExOTg0MjY4MTU5ODc4NzY5Ng.GUiFqi.xHw2LkI3LBEFrNjfPTrtnnxT_ElPRKgDrN4akQ")
