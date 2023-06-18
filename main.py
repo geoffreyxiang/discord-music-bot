@@ -23,10 +23,6 @@ vc = None
 #remove the default help command so that we can write out own
 bot.remove_command('help')
 
-#register the class with the bot
-# bot.add_cog(music_cog(bot))
-# bot.add_cog(help_cog(bot))
-
 text_channel_list = []
 help_message = """
 ```
@@ -192,5 +188,5 @@ async def dc(ctx):
     await vc.disconnect()
 
 #start the bot with our token
-# bot.run(str(os.getenv("TOKEN")))
-bot.run("MTExOTg0MjY4MTU5ODc4NzY5Ng.GUiFqi.xHw2LkI3LBEFrNjfPTrtnnxT_ElPRKgDrN4akQ")
+TOKEN = str(os.getenv('TOKEN'))
+bot.run(TOKEN)
