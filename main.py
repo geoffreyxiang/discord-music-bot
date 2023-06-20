@@ -1,8 +1,10 @@
 import discord
+import random
 from discord.ext import commands
 from yt_dlp import YoutubeDL
 import os
 
+from spotify_feature import createPlaylist, getBearerToken
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -11,7 +13,6 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 
 # All the music-related stuff
 is_playing = False
-is_paused = False
 
 # 2D array containing [song, channel]
 music_queue = []
@@ -34,7 +35,10 @@ General commands:
 /clear - Stops the music and clears the queue
 /leave - Disconnected the bot from the voice channel
 /pause - pauses the current song being played or resumes if already paused
+/shuffle - shuffles the current queue
 /resume - resumes playing the current song
+/spotify - add a playlist using the spotify playlist url
+/shufflespotify - adds a shuffled palylist using spotify playlist url (use this instead of /spotify + /shuffle when wanted to add a shuffled playlist or else you may not get a shuffled playlist)
 ```
 """    
 
@@ -104,14 +108,13 @@ async def play_music(ctx):
 @bot.command(name="play", aliases=["p", "playing"], help="Plays a selected song from YouTube")
 async def play(ctx, *args):
     global is_playing
-    global is_paused
     query = " ".join(args)
 
     voice_channel = ctx.message.author.voice.channel
     if voice_channel is None:
         # You need to be connected so that the bot knows where to go
         await ctx.send("Connect to a voice channel!")
-    elif is_paused:
+    elif not is_playing:
         vc.resume()
     else:
         song = search_yt(query)
@@ -130,22 +133,14 @@ async def play(ctx, *args):
 @bot.command(name="pause", help="Pauses the current song being played")
 async def pause(ctx, *args):
     global is_playing
-    global is_paused
     if is_playing:
         is_playing = False
-        is_paused = True
         vc.pause()
-    elif is_paused:
-        is_paused = False
-        is_playing = True
-        vc.resume()
 
 @bot.command(name = "resume", aliases=["r"], help="Resumes playing with the discord bot")
 async def resume(ctx, *args):
     global is_playing
-    global is_paused
-    if is_paused:
-        is_paused = False
+    if not is_playing:
         is_playing = True
         vc.resume()
 
@@ -159,7 +154,7 @@ async def skip(ctx):
 
 @bot.command(name="queue", aliases=["q"], help="Displays the current songs in queue")
 async def queue(ctx):
-    global music_queueu
+    global music_queue
     retval = ""
     for i in range(0, len(music_queue)):
         # display a max of 5 songs in the current queue
@@ -182,12 +177,74 @@ async def clear(ctx):
 @bot.command(name="leave", aliases=["disconnect", "l", "d"], help="Kick the bot from VC")
 async def dc(ctx):
     global is_playing
-    global is_paused
     is_playing = False
-    is_paused = False
     await vc.disconnect()
 
+@bot.command(name="shuffle", aliases=["shuf"], help="Shuffle the current queue")
+async def dc(ctx):
+    global music_queue
+    if not music_queue:
+        await ctx.send("Music queue is empty")
+    else:
+        random.shuffle(music_queue)
+        await ctx.send("Music queue shuffled")
+
+# spotify integration features
+@bot.command(name="spotifyplay", aliases=["spotify", "playlist"], help="Add a playlist from spotify")
+async def play(ctx, *args):
+    global is_playing
+    query = " ".join(args)
+
+    songList = createPlaylist(query, bearerToken=getBearerToken())
+    print(songList)
+    processedList = [f'{item["name"]} {item["artist"]}' for item in songList]
+
+    voice_channel = ctx.message.author.voice.channel
+    if voice_channel is None:
+        # You need to be connected so that the bot knows where to go
+        await ctx.send("Connect to a voice channel!")
+    else:
+        for songQuery in processedList:
+            song = search_yt(songQuery)
+            if type(song) == type(True):
+                await ctx.send(
+                    f'Could not download {songQuery}'
+                )
+            else:
+                await ctx.send(f'{songQuery} added to the queue')
+                music_queue.append([song, voice_channel])
+
+                if not is_playing:
+                    await play_music(ctx)
+
+@bot.command(name="shufflespotify", aliases=["shuffleplaylist", "splaylist"], help="Add a shuffled playlist from spotify")
+async def play(ctx, *args):
+    global is_playing
+    query = " ".join(args)
+
+    songList = createPlaylist(query, bearerToken=getBearerToken())
+    print(songList)
+    processedList = [f'{item["name"]} {item["artist"]}' for item in songList]
+    random.shuffle(processedList)
+
+    voice_channel = ctx.message.author.voice.channel
+    if voice_channel is None:
+        # You need to be connected so that the bot knows where to go
+        await ctx.send("Connect to a voice channel!")
+    else:
+        for songQuery in processedList:
+            song = search_yt(songQuery)
+            if type(song) == type(True):
+                await ctx.send(
+                    f'Could not download {songQuery}'
+                )
+            else:
+                await ctx.send(f'{songQuery} added to the queue')
+                music_queue.append([song, voice_channel])
+
+                if not is_playing:
+                    await play_music(ctx)
+
 #start the bot with our token
-# TOKEN = str(os.getenv('TOKEN'))
-# bot.run(TOKEN)
-bot.run("MTExOTg0MjY4MTU5ODc4NzY5Ng.GUiFqi.xHw2LkI3LBEFrNjfPTrtnnxT_ElPRKgDrN4akQ")
+TOKEN = str(os.getenv('DISCORD_BOT_TOKEN'))
+bot.run(TOKEN)
