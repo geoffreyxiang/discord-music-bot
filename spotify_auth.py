@@ -1,8 +1,11 @@
 import requests
+from dotenv import load_dotenv
+import os
 
 def getBearerToken():
-    client_id = '24caaa8126be4477b94c2d360e9beac6'
-    client_secret = '39a77a2dc7b74bb2996c983d4759749d'
+    load_dotenv()
+    client_id = os.getenv('CLIENT_ID')
+    client_secret = os.getenv('CLIENT_SECRET')
 
     # Set the endpoint URL
     url = 'https://accounts.spotify.com/api/token'

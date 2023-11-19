@@ -108,14 +108,15 @@ async def play_music(ctx):
 @bot.command(name="play", aliases=["p", "playing"], help="Plays a selected song from YouTube")
 async def play(ctx, *args):
     global is_playing
+    global vc
     query = " ".join(args)
 
     voice_channel = ctx.message.author.voice.channel
     if voice_channel is None:
         # You need to be connected so that the bot knows where to go
         await ctx.send("Connect to a voice channel!")
-    elif not is_playing:
-        vc.resume()
+    # elif not is_playing:
+    #     vc.resume()
     else:
         song = search_yt(query)
         if type(song) == type(True):
